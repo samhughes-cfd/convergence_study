@@ -7,10 +7,10 @@ This checklist organizes the enhancements planned for the convergence verificati
 ## 🧱 Phase 1: Foundation Polishing
 
 ### 🧮 Standards and Config
-- [ ] Add `.to_dict()` method to `StandardParameters`
-- [ ] Add `.to_dict()` and `.to_json()` method to `MeshData`
-- [ ] Allow loading of user-defined standards via JSON/YAML
-- [ ] Create a `config.py` to centralize numerical tolerances (e.g., `eps`)
+- [x] Add `.to_dict()` method to `StandardParameters`
+- [x] Add `.to_dict()` and `.to_json()` method to `MeshData`
+- [x] Allow loading of user-defined standards via JSON/YAML
+- [x] Create a `config.py` to centralize numerical tolerances (e.g., `eps`)
 
 ### 📐 Mesh and Dimensionality
 - [ ] Add optional `dim` field to `MeshData` (default 3)
