@@ -1,0 +1,40 @@
+[project]
+name = "convergence_verification_program"
+version = "0.1.0"
+description = "A modular toolkit for convergence verification and uncertainty quantification."
+authors = [
+  { name = "Sam Hughes MEng", email = "samuel.hughes@ed.ac.uk" }
+]
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE.txt" }
+
+dependencies = [
+  "numpy>=1.23",
+  "pydantic>=2.0",
+  "matplotlib>=3.5",
+  "scipy>=1.9"
+]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering",
+  "Typing :: Typed"
+]
+
+[project.urls]
+Repository = "https://github.com/samhughes/convergence_verification_program"
+Documentation = "https://github.com/samhughes/convergence_verification_program#readme"
+Issues = "https://github.com/samhughes/convergence_verification_program/issues"
+
+[tool.setuptools]
+packages = ["convergence_verification_program"]
+package-dir = { "" = "src" }
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

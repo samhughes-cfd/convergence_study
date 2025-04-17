@@ -1,8 +1,8 @@
+# src\convergence_verification_program\exceptions.py
+
 class ConvergenceAnalysisError(Exception):
     """
     Base exception for all convergence analysis errors.
-
-    This should be used as the root class for exception handling in convergence pipelines.
     """
 
     def __init__(self, message: str, details: dict = None):
@@ -12,9 +12,10 @@ class ConvergenceAnalysisError(Exception):
         message : str
             Description of the error.
         details : dict, optional
-            Additional structured data to help with debugging (e.g., parameter values, indices).
+            Structured debugging metadata (e.g., failed indices, values).
         """
         super().__init__(message)
+        self.message = message
         self.details = details or {}
 
     def __str__(self):
@@ -23,38 +24,45 @@ class ConvergenceAnalysisError(Exception):
             return f"{base} | Details: {self.details}"
         return base
 
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}("
+            f"message={self.message!r}, "
+            f"details={self.details!r})"
+        )
+
 
 class InvalidRefinementSequenceError(ConvergenceAnalysisError):
     """
-    Raised when mesh refinement ratios are out of allowed bounds.
+    Raised when mesh refinement ratios are out of bounds or improperly defined.
     """
 
 
 class NonMonotonicConvergenceError(ConvergenceAnalysisError):
     """
-    Raised when observed convergence order shows irregular (non-monotonic) behavior.
+    Raised when observed convergence order exhibits oscillation or irregular jumps.
     """
 
 
 class AsymptoticConvergenceFailure(ConvergenceAnalysisError):
     """
-    Raised when the computed GCI values fail to meet the asymptotic convergence criteria.
+    Raised when GCI values fail to meet the required asymptotic convergence criteria.
     """
 
 
 class InvalidMeshParameterError(ConvergenceAnalysisError):
     """
-    Raised when mesh parameters are missing or contain invalid (non-numeric or None) values.
+    Raised when mesh parameters are missing or contain invalid values.
     """
 
 
 class InsufficientMeshCountError(ConvergenceAnalysisError):
     """
-    Raised when the number of provided mesh levels is insufficient for triplet-based analysis.
+    Raised when fewer than three mesh levels are provided.
     """
 
 
 class UnstableGCICalculationError(ConvergenceAnalysisError):
     """
-    Raised when GCI computation fails due to singularities, numerical instability, or invalid order.
+    Raised when GCI calculation fails due to instability or singularity.
     """

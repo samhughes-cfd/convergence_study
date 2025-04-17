@@ -1,13 +1,18 @@
+# src\convergence_verification_program\standards.py
+
 from enum import Enum
 from dataclasses import dataclass
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Union
 from types import MappingProxyType
 from pydantic import BaseModel
+
 
 class AnalysisStandard(Enum):
     """Supported verification standards."""
     ASME_VV20_2009 = "ASME V&V20-2009"
     NASA_CFD2030 = "NASA CFD Vision 2030"
+    CUSTOM = "User-defined"
+
 
 @dataclass(frozen=True)
 class StandardParameters:
@@ -36,12 +41,32 @@ class StandardParameters:
     order_tolerance: float
     residual_tol: float = 1e-6
 
+    def to_dict(self) -> Dict[str, float]:
+        """
+        Convert parameters to dictionary form.
+
+        Returns
+        -------
+        Dict[str, float]
+            Dictionary representation of the parameters.
+        """
+        return {
+            "min_refinement": self.min_refinement,
+            "max_refinement": self.max_refinement,
+            "asymptotic_ratio": self.asymptotic_ratio,
+            "safety_factor": self.safety_factor,
+            "order_tolerance": self.order_tolerance,
+            "residual_tol": self.residual_tol,
+        }
+
+
 class StandardRegistry:
     """
     Central registry for standard configurations.
+    Supports default and dynamically added custom standards.
     """
 
-    _PARAMETERS = MappingProxyType({
+    _PARAMETERS = {
         AnalysisStandard.ASME_VV20_2009: StandardParameters(
             min_refinement=1.1,
             max_refinement=3.0,
@@ -56,24 +81,57 @@ class StandardRegistry:
             safety_factor=1.15,
             order_tolerance=0.05
         )
-    })
+    }
 
     @classmethod
-    def get_parameters(cls, standard: AnalysisStandard) -> StandardParameters:
+    def get_parameters(cls, standard: Union[AnalysisStandard, str]) -> StandardParameters:
         """
         Retrieve parameters for specified standard.
 
         Parameters
         ----------
-        standard : AnalysisStandard
+        standard : AnalysisStandard or str
             The selected verification standard.
 
         Returns
         -------
         StandardParameters
             Numerical parameters associated with the standard.
+
+        Raises
+        ------
+        KeyError
+            If the standard is not registered.
         """
-        return cls._PARAMETERS[standard]
+        key = standard if isinstance(standard, AnalysisStandard) else AnalysisStandard(standard)
+        if key not in cls._PARAMETERS:
+            raise KeyError(f"Standard '{key}' not registered.")
+        return cls._PARAMETERS[key]
+
+    @classmethod
+    def register_custom_standard(cls, name: str, params: Dict[str, float]) -> None:
+        """
+        Register a custom standard.
+
+        Parameters
+        ----------
+        name : str
+            Name of the custom standard.
+        params : Dict[str, float]
+            Dictionary with required keys matching StandardParameters.
+
+        Raises
+        ------
+        ValueError
+            If required parameters are missing or invalid.
+        """
+        try:
+            standard_enum = AnalysisStandard(name) if name in AnalysisStandard.__members__ else AnalysisStandard.CUSTOM
+        except ValueError:
+            standard_enum = AnalysisStandard.CUSTOM
+
+        cls._PARAMETERS[standard_enum] = StandardParameters(**params)
+
 
 class StandardValidator(BaseModel):
     """
@@ -90,13 +148,13 @@ class StandardValidator(BaseModel):
     parameters: StandardParameters
 
     @classmethod
-    def from_standard(cls, standard: AnalysisStandard) -> "StandardValidator":
+    def from_standard(cls, standard: Union[AnalysisStandard, str]) -> "StandardValidator":
         """
         Initialize validator from a standard.
 
         Parameters
         ----------
-        standard : AnalysisStandard
+        standard : AnalysisStandard or str
             The selected verification standard.
 
         Returns
@@ -105,7 +163,7 @@ class StandardValidator(BaseModel):
             A validator instance with fetched parameters.
         """
         return cls(
-            standard=standard,
+            standard=standard if isinstance(standard, AnalysisStandard) else AnalysisStandard(standard),
             parameters=StandardRegistry.get_parameters(standard)
         )
 
@@ -147,6 +205,7 @@ class StandardValidator(BaseModel):
             True if convergence is asymptotic.
         """
         return current_gci < self.parameters.asymptotic_ratio * previous_gci
+
 
 class ComplianceReport:
     """
@@ -196,7 +255,7 @@ class ComplianceReport:
 
     def _format_asymptotic(self, gci: List[float]) -> str:
         flags = [
-            self.validator.is_asymptotic(gci[i-1], gci[i])
+            self.validator.is_asymptotic(gci[i - 1], gci[i])
             for i in range(1, len(gci))
         ]
         return "Convergent" if all(flags) else "Non-asymptotic behavior detected"
